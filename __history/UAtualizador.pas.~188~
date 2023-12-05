@@ -1,0 +1,392 @@
+unit UAtualizador;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, REST.Types,
+  REST.Authenticator.OAuth.WebForm.Win, Data.DB, ZAbstractRODataset,
+  ZAbstractDataset, ZDataset, ZAbstractConnection, ZConnection, Vcl.Grids,
+  Vcl.DBGrids, Vcl.StdCtrls, Datasnap.DBClient, REST.Client,
+  REST.Authenticator.OAuth, REST.Response.Adapter, Data.Bind.Components,
+  Data.Bind.ObjectScope,Json, Vcl.ComCtrls, Vcl.ExtCtrls, ZStoredProcedure,
+  FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param,
+  FireDAC.Stan.Error, FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf,
+  FireDAC.Comp.DataSet, FireDAC.Comp.Client, FireDAC.Stan.StorageBin,DataSet.Serialize;
+type
+  TForm2 = class(TForm)
+    dsPedidosSite: TDataSource;
+    DBGrid1: TDBGrid;
+    Button2: TButton;
+    Financeiro: TZConnection;
+    QSituaçãoMensagem: TZQuery;
+    Memo2: TMemo;
+    RESTClient1: TRESTClient;
+    RESTRequest1: TRESTRequest;
+    RESTResponse1: TRESTResponse;
+    RESTResponseDataSetAdapter1: TRESTResponseDataSetAdapter;
+    Timer1: TTimer;
+    QPedidoSiteEnvio: TZQuery;
+    Memo1: TMemo;
+    cdsPedidosSite: TClientDataSet;
+    ClientDataSet1: TClientDataSet;
+    DBGrid2: TDBGrid;
+    DataSource2: TDataSource;
+    whats: TZConnection;
+    SP_ConsultaPessoa: TZStoredProc;
+    SP_Insere_Pessoa: TZStoredProc;
+    SP_ConsultaAtendimento: TZStoredProc;
+    SP_InsereAtendimento: TZStoredProc;
+    SP_Insere_Msg: TZStoredProc;
+    procedure Button2Click(Sender: TObject);
+    procedure DBGrid1CellClick(Column: TColumn);
+    procedure Timer1Timer(Sender: TObject);
+  private
+    procedure PopularDataSet(dataset: TClientDataSet; storedproc: TZQuery);
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  Form2: TForm2;
+  jsonObj,jsonEstoque : TJSONObject;
+  jsonArray :TJsonArray;
+
+implementation
+
+{$R *.dfm}
+
+procedure TForm2.Button2Click(Sender: TObject);
+
+begin
+  try
+
+
+
+      RESTClient1.BaseURL := 'https://api.fbits.net/pedidos/situacaoPedido/1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%2C10%2C11%2C12%2C13%2C14%2C15%2C16%2C17%2C18%2C19%2C20%2C21%2C22%2C23';
+
+      RESTRequest1.Params.Clear;
+      RESTRequest1.Method := rmGET;
+      RESTRequest1.Resource := '';
+
+      RESTRequest1.ClearBody;
+      RESTRequest1.Params.AddItem('Authorization', 'Basic 	shoem-e53ca230-e36d-43b9-b277-81d717492ddf', pkHTTPHEADER, [poDoNotEncode]);
+
+      RESTRequest1.Params.AddItem('dataInicial', FormatDateTime('yyyy-mm-dd', Date -1 ), pkQUERY, [poDoNotEncode]);
+      RESTRequest1.Params.AddItem('dataFinal', FormatDateTime( 'yyyy-mm-dd', Date +1), pkQUERY, [poDoNotEncode]);
+
+
+
+      RESTRequest1.Execute;
+
+
+
+
+      memo2.Lines.Add(RESTResponse1.Content);
+
+
+
+
+
+  except
+    on e:exception do begin
+      memo2.Lines.Add(e.ToString);
+    end;
+
+  end;
+
+
+end;
+
+procedure TForm2.DBGrid1CellClick(Column: TColumn);
+begin
+  if Column.FieldName = 'usuario' then  begin
+    memo1.Text:='';
+    memo1.Lines.Add(cdsPedidosSite.FieldByName('usuario').AsString);
+            ClientDataset1.EmptyDataSet;
+        ClientDataset1.LoadFromJSON(cdsPedidosSite.FieldbyName('usuario').Value);
+
+  end;
+
+end;
+
+procedure TForm2.PopularDataSet(dataset:TClientDataSet;storedproc:TZQuery);
+var i,tamCampo,ifields:integer;
+begin
+  dataset.FieldDefs.Clear;
+   dataset.Close;
+  for I := 0 to storedproc.FieldCount -1 do
+  begin
+     tamCampo:= storedproc.Fields[i].size;
+
+    if  FieldTypeNames[storedproc.Fields[i].DataType] = 'Integer' then
+       dataset.FieldDefs.Add(storedproc.Fields[i].FieldName,TFieldType.ftInteger)
+
+    else if FieldTypeNames[storedproc.Fields[i].DataType] = 'LargInt' then
+        dataset.FieldDefs.Add(storedproc.Fields[i].FieldName,ftBCD)
+
+   else
+      if tamCampo >0 then
+       dataset.FieldDefs.Add(storedproc.Fields[i].FieldName,TFieldType.ftString,tamCampo)
+      else
+         dataset.FieldDefs.Add(storedproc.Fields[i].FieldName,TFieldType.ftString,100);
+  end;
+
+
+    ifields := 1;
+   dataset.CreateDataSet;
+   dataset.EmptyDataSet;
+
+   storedproc.First;
+   while not storedproc.eof do
+  begin
+    dataset.Append;
+    for I := 0 to dataset.FieldCount -ifields do
+    begin
+
+      dataset.FieldByName(dataset.Fields[i].FieldName).AsString := storedproc.FieldByName(storedproc.Fields[i].FieldName).AsString;
+
+
+    end;
+
+    dataset.Post;
+    storedproc.Next;
+  end;
+
+  dataset.First;
+end;
+
+
+procedure TForm2.Timer1Timer(Sender: TObject);
+var celular,Mensagem, atendimento :string;
+ threadEnvio : TThread;
+IdPessoa : integer;
+begin
+
+   Timer1.Enabled := false;
+threadEnvio := TThread.CreateAnonymousThread(  procedure
+   var erro:string;
+     begin
+
+
+        try
+
+
+
+           //Verificar Pedidos Cancelado ou com erro do Site
+            RESTClient1.BaseURL := 'https://api.fbits.net/pedidos/situacaoPedido/1%2C2%2C3%2C4%2C5%2C6%2C7%2C8%2C9%2C10%2C11%2C12%2C13%2C14%2C15%2C16%2C17%2C18%2C19%2C20%2C21%2C22%2C23';
+
+            RESTRequest1.Params.Clear;
+            RESTRequest1.Method := rmGET;
+            RESTRequest1.Resource := '';
+
+            RESTRequest1.ClearBody;
+            RESTRequest1.Params.AddItem('Authorization', 'Basic 	shoem-e53ca230-e36d-43b9-b277-81d717492ddf', pkHTTPHEADER, [poDoNotEncode]);
+
+            RESTRequest1.Params.AddItem('dataInicial',FormatDateTime('yyyy-mm-dd', Date -1 ), pkQUERY, [poDoNotEncode]);
+            RESTRequest1.Params.AddItem('dataFinal',FormatDateTime('yyyy-mm-dd', Date +1 ), pkQUERY, [poDoNotEncode]);
+
+
+
+            RESTRequest1.Execute;
+          cdsPedidosSite.First;
+          while not cdsPedidosSite.Eof do begin
+
+            //Verificar Pedido na lista de mensagens no BD Financeiro
+            QPedidoSiteEnvio.Close;
+            QPedidoSiteEnvio.SQL.Clear;
+            QPedidoSiteEnvio.SQL.Add('select * from pedidos_site_envio where idPedido = :idPedido and mensagem_gerada = 1 ');
+            QPedidoSiteEnvio.ParamByName('idPedido').Value :=  cdsPedidosSite.FieldByName('PedidoId').AsInteger;
+            QPedidoSiteEnvio.Open;
+
+            if QPedidoSiteEnvio.isEmpty then
+             begin
+               // QPedidoSiteEnvio.First;
+
+               // while not QPedidoSiteEnvio.Eof do begin
+                    //Verificar Situação do Pedido e Mensagem a ser Enviada
+
+
+
+
+                    QSituaçãoMensagem.Close;
+                    QSituaçãoMensagem.SQL.Clear;
+                    QSituaçãoMensagem.SQL.Add('select Mensagem  from MensagemSite Ms,MensagemSituacao mst '
+                    +'where ms.cod_mensagemsite = mst.cod_mensagemsite '
+                    +'and mst.cod_situacao = :codsituacao');
+                    QSituaçãoMensagem.ParamByName('codsituacao').Value := cdsPedidosSite.FieldByName('situacaoPedidoId').AsInteger;
+                    QSituaçãoMensagem.Open;
+
+                      if not QSituaçãoMensagem.IsEmpty then begin
+
+                        //gerar mensagem no banco whats
+                        while not QSituaçãoMensagem.Eof do begin
+
+                          ClientDataset1.EmptyDataSet;
+                          ClientDataset1.LoadFromJSON(cdsPedidosSite.FieldbyName('usuario').Value);
+
+                          if ClientDataset1.FieldbyName('telefoneResidencial').AsString <> '' then
+                            celular := '55'+ ClientDataset1.FieldbyName('telefoneResidencial').AsString
+
+                          else if ClientDataset1.FieldbyName('telefoneCelular').AsString <> '' then
+                            celular := '55'+ ClientDataset1.FieldbyName('telefoneCelular').AsString;
+
+                          celular := stringReplace(celular,'(','',[rfReplaceAll, rfIgnoreCase]);
+                          celular := stringReplace(celular,')','',[rfReplaceAll, rfIgnoreCase]);
+                          celular := stringReplace(celular,'-','',[rfReplaceAll, rfIgnoreCase]);
+                          celular := stringReplace(celular,' ','',[rfReplaceAll, rfIgnoreCase]);
+
+
+                          //Consultar se Contato esta cadastrado
+                          SP_consultaPessoa.Close;
+                          SP_consultaPessoa.ParamByName('@cel').Value := celular;
+                          SP_consultaPessoa.ParamByName('@Id').Value := null;
+                          SP_consultaPessoa.ParamByName('@consultaID').Value := 0;
+                          SP_consultaPessoa.Open;
+
+                              if not SP_consultaPessoa.IsEmpty then begin
+                                //gravar id do contato do banco do whats em variavel
+                                IdPessoa:= SP_consultaPessoa.FieldByName('ID_Pessoa').Value;
+                              end
+                              else begin
+                                    try
+                                      Financeiro.StartTransaction;
+                                     //cadastrar novo contato banco do whats
+                                      SP_Insere_Pessoa.Close;
+                                      SP_Insere_Pessoa.ParambyName('@Nome').Value := ClientDataset1.FieldbyName('nome').Value ;
+                                      SP_Insere_Pessoa.ParambyName('@cel').Value := celular;
+                                      SP_Insere_Pessoa.ExecProc;
+
+                                      IdPessoa := SP_Insere_Pessoa.ParambyName('@RETURN_VALUE').Value;
+
+                                      Financeiro.Commit;
+
+
+                                    Except
+                                      on e:Exception do
+                                      begin
+                                        Financeiro.Rollback;
+                                        TThread.Synchronize(nil,procedure
+                                        begin
+
+                                        memo2.Lines.Add(e.ToString);
+                                        end);
+
+                                      end;
+
+                                    end;
+
+                              end;
+
+                           try
+
+                              Financeiro.StartTransaction;
+
+                               SP_ConsultaAtendimento.Close;
+                              SP_ConsultaAtendimento.ParamByName('@ID_Pessoa').Value := IdPessoa;
+                              SP_ConsultaAtendimento.Open;
+                               if SP_ConsultaAtendimento.IsEmpty then
+                               begin
+                                SP_InsereAtendimento.Close;
+                                SP_InsereAtendimento.ParamByName('@ID_cliente').Value := IdPessoa;
+                                SP_InsereAtendimento.ParamByName('@status').Value := 'AUTOMATICO';
+                                SP_InsereAtendimento.ExecProc;
+                                 atendimento :=  SP_InsereAtendimento.ParambyName('@RETURN_VALUE').Value;
+                               end
+                               else
+                               begin
+                                 atendimento := SP_ConsultaAtendimento.FieldByName('ID_Atendimento').AsString;
+                               end;
+
+
+
+                            Mensagem :=   QSituaçãoMensagem.FieldByName('Mensagem').AsString;
+
+                             SP_Insere_Msg.Close;
+                             SP_Insere_Msg.ParamByName('@cel_cliente').Value := celular;
+                             SP_Insere_Msg.ParamByName('@TpMensagem').Value :='ENVIANDO' ;
+                             SP_Insere_Msg.ParamByName('@Msg').Value := Mensagem;
+                             SP_Insere_Msg.ParamByName('@id_user').Value := '2003';
+                              SP_Insere_Msg.ParamByName('@idAnexo').Value := null;
+                              SP_Insere_Msg.ParamByName('@idAtendimento').Value :=  atendimento;
+                              SP_Insere_Msg.ParamByName('@idMsgAuto').Value := null;
+                              SP_Insere_Msg.ParamByName('@idWhatsMsg').Value := '';
+                              SP_Insere_Msg.ExecProc;
+                              Financeiro.Commit;
+
+
+                               QPedidoSiteEnvio.Close;
+                              QPedidoSiteEnvio.SQL.Clear;
+                              QPedidoSiteEnvio.SQL.Add('insert into pedidos_site_envio Values(:idPedido , 1, getdate()) ');
+                              QPedidoSiteEnvio.ParamByName('idPedido').Value :=  cdsPedidosSite.FieldByName('Pedidoid').AsInteger;
+                              QPedidoSiteEnvio.ExecSQL;
+
+
+                            Except
+                            on e:Exception do
+                              begin
+                                Financeiro.Rollback;
+                                 TThread.Synchronize(nil,procedure
+                                        begin
+
+                                        memo2.Lines.Add(e.ToString);
+                                        end);
+
+                              end;
+
+
+                            end;
+
+
+
+                           QSituaçãoMensagem.Next;
+
+                        end;
+
+
+
+
+                      end;
+
+
+                    //inserir pedido como enviado no bd Financeiro
+
+
+
+
+
+                  //  QPedidoSiteEnvio.Next;
+                end;
+                cdsPedidosSite.Next;
+
+          end;
+
+
+
+
+            sleep(120000);
+
+             TThread.Synchronize(nil,procedure
+             begin
+              Timer1.Enabled := true;
+
+             end);
+
+
+
+
+        except
+          on e:exception do begin
+            memo2.Lines.Add(e.ToString);
+          end;
+
+        end;
+     end);
+
+      threadEnvio.FreeOnTerminate := true;
+
+        threadEnvio.Start;
+end;
+
+end.

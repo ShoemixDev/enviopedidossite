@@ -1,0 +1,559 @@
+﻿object Form2: TForm2
+  Left = 0
+  Top = 0
+  Caption = 'Atualizar Produtos'
+  ClientHeight = 576
+  ClientWidth = 1101
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  TextHeight = 15
+  object DBGrid1: TDBGrid
+    Left = 4
+    Top = 8
+    Width = 1089
+    Height = 105
+    DataSource = dsPedidosSite
+    TabOrder = 0
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+    OnCellClick = DBGrid1CellClick
+  end
+  object Button2: TButton
+    Left = 687
+    Top = 303
+    Width = 58
+    Height = 25
+    Caption = 'Enviar'
+    TabOrder = 1
+    OnClick = Button2Click
+  end
+  object Memo2: TMemo
+    Left = 232
+    Top = 471
+    Width = 529
+    Height = 89
+    ScrollBars = ssVertical
+    TabOrder = 2
+  end
+  object Memo1: TMemo
+    Left = 248
+    Top = 344
+    Width = 497
+    Height = 89
+    ScrollBars = ssVertical
+    TabOrder = 3
+  end
+  object DBGrid2: TDBGrid
+    Left = 152
+    Top = 144
+    Width = 721
+    Height = 120
+    DataSource = DataSource2
+    TabOrder = 4
+    TitleFont.Charset = DEFAULT_CHARSET
+    TitleFont.Color = clWindowText
+    TitleFont.Height = -12
+    TitleFont.Name = 'Segoe UI'
+    TitleFont.Style = []
+  end
+  object dsPedidosSite: TDataSource
+    DataSet = cdsPedidosSite
+    Left = 88
+    Top = 368
+  end
+  object Financeiro: TZConnection
+    ControlsCodePage = cCP_UTF16
+    AutoEncodeStrings = True
+    Catalog = ''
+    Properties.Strings = (
+      'controls_cp=CP_UTF16'
+      'AutoEncodeStrings=True')
+    Connected = True
+    HostName = '10.0.0.25,3306'
+    Port = 0
+    Database = 'FINANCEIRO'
+    User = 'sa'
+    Password = 'S3rv3r'
+    Protocol = 'mssql'
+    Left = 1008
+    Top = 16
+  end
+  object QSituaçãoMensagem: TZQuery
+    Connection = Financeiro
+    Params = <>
+    Left = 1008
+    Top = 176
+  end
+  object RESTClient1: TRESTClient
+    Accept = 'application/json, text/plain; q=0.9, text/html;q=0.8,'
+    AcceptCharset = 'utf-8, *;q=0.8'
+    BaseURL = 'https://api.fbits.net/produtos'
+    ContentType = 'application/x-www-form-urlencoded'
+    Params = <>
+    SynchronizedEvents = False
+    Left = 24
+    Top = 32
+  end
+  object RESTRequest1: TRESTRequest
+    Client = RESTClient1
+    Params = <
+      item
+        Kind = pkHTTPHEADER
+        Name = 'Authorization'
+        Options = [poDoNotEncode]
+        Value = 'Basic '#9'shoem-e53ca230-e36d-43b9-b277-81d717492ddf'
+      end>
+    Response = RESTResponse1
+    SynchronizedEvents = False
+    Left = 24
+    Top = 120
+  end
+  object RESTResponse1: TRESTResponse
+    ContentType = 'application/json'
+    Left = 48
+    Top = 192
+  end
+  object RESTResponseDataSetAdapter1: TRESTResponseDataSetAdapter
+    Dataset = cdsPedidosSite
+    FieldDefs = <>
+    Response = RESTResponse1
+    StringFieldSize = 1000
+    Left = 48
+    Top = 280
+  end
+  object Timer1: TTimer
+    Enabled = False
+    Interval = 500
+    OnTimer = Timer1Timer
+    Left = 24
+    Top = 384
+  end
+  object QPedidoSiteEnvio: TZQuery
+    Params = <>
+    Left = 1016
+    Top = 88
+  end
+  object cdsPedidosSite: TClientDataSet
+    Aggregates = <>
+    Params = <>
+    Left = 104
+    Top = 448
+  end
+  object ClientDataSet1: TClientDataSet
+    PersistDataPacket.Data = {
+      C90200009619E0BD010000001800000015000000000003000000C90209757375
+      6172696F4964010049000000010005574944544802000200640018677275706F
+      496E666F726D6163616F43616461737472616C01004900000001000557494454
+      480200020064000A7469706F506573736F610100490000000100055749445448
+      0200020064000D6F726967656D436F6E7461746F010049000000010005574944
+      5448020002006400087469706F5365786F010049000000010005574944544802
+      0002006400046E6F6D6501004900000001000557494454480200020064000363
+      7066010049000000010005574944544802000200640005656D61696C01004900
+      0000010005574944544802000200640002726701004900000001000557494454
+      480200020064001374656C65666F6E655265736964656E6369616C0100490000
+      0001000557494454480200020064000F74656C65666F6E6543656C756C617201
+      004900000001000557494454480200020064001174656C65666F6E65436F6D65
+      726369616C01004900000001000557494454480200020064000E646174614E61
+      7363696D656E746F01004900000001000557494454480200020064000B72617A
+      616F536F6369616C010049000000010005574944544802000200640004636E70
+      6A010049000000010005574944544802000200640011696E7363726963616F45
+      7374616475616C01004900000001000557494454480200020064000B72657370
+      6F6E736176656C01004900000001000557494454480200020064000B64617461
+      4372696163616F01004900000001000557494454480200020064000F64617461
+      417475616C697A6163616F01004900000001000557494454480200020064000A
+      726576656E6465646F720100490000000100055749445448020002006400186C
+      69737461496E666F726D6163616F43616461737472616C010049000000010005
+      57494454480200020064000000}
+    Active = True
+    Aggregates = <>
+    FieldDefs = <
+      item
+        Name = 'usuarioId'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'grupoInformacaoCadastral'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'tipoPessoa'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'origemContato'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'tipoSexo'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'nome'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'cpf'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'email'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'rg'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'telefoneResidencial'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'telefoneCelular'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'telefoneComercial'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'dataNascimento'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'razaoSocial'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'cnpj'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'inscricaoEstadual'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'responsavel'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'dataCriacao'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'dataAtualizacao'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'revendedor'
+        DataType = ftString
+        Size = 100
+      end
+      item
+        Name = 'listaInformacaoCadastral'
+        DataType = ftString
+        Size = 100
+      end>
+    IndexDefs = <>
+    Params = <>
+    StoreDefs = True
+    Left = 976
+    Top = 368
+  end
+  object DataSource2: TDataSource
+    DataSet = ClientDataSet1
+    Left = 976
+    Top = 448
+  end
+  object whats: TZConnection
+    ControlsCodePage = cCP_UTF16
+    AutoEncodeStrings = True
+    Catalog = ''
+    Properties.Strings = (
+      'controls_cp=CP_UTF16')
+    Connected = True
+    HostName = '10.0.140.252,3306'
+    Port = 0
+    Database = 'whats'
+    User = 'sa'
+    Password = 'S3rv3r'
+    Protocol = 'mssql'
+    Left = 840
+    Top = 24
+  end
+  object SP_ConsultaPessoa: TZStoredProc
+    Connection = whats
+    Params = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftWideString
+        Name = '@cel'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@Id'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@consultaID'
+        ParamType = ptInput
+      end>
+    StoredProcName = 'dbo.consulta_Pessoa'
+    Left = 832
+    Top = 120
+    ParamData = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftWideString
+        Name = '@cel'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@Id'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@consultaID'
+        ParamType = ptInput
+      end>
+  end
+  object SP_Insere_Pessoa: TZStoredProc
+    Connection = whats
+    Params = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftWideString
+        Name = '@Nome'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@cel'
+        ParamType = ptInput
+      end>
+    StoredProcName = 'dbo.Insere_Pessoa'
+    Left = 832
+    Top = 208
+    ParamData = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftWideString
+        Name = '@Nome'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@cel'
+        ParamType = ptInput
+      end>
+  end
+  object SP_ConsultaAtendimento: TZStoredProc
+    Connection = whats
+    Params = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftInteger
+        Name = '@ID_Pessoa'
+        ParamType = ptInput
+      end>
+    StoredProcName = 'dbo.consulta_Atendimento'
+    Left = 832
+    Top = 280
+    ParamData = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftInteger
+        Name = '@ID_Pessoa'
+        ParamType = ptInput
+      end>
+  end
+  object SP_InsereAtendimento: TZStoredProc
+    Connection = whats
+    Params = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftWideString
+        Name = '@ID_cliente'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@status'
+        ParamType = ptInput
+      end>
+    StoredProcName = 'dbo.Insere_Atendimento'
+    Left = 832
+    Top = 360
+    ParamData = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftWideString
+        Name = '@ID_cliente'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@status'
+        ParamType = ptInput
+      end>
+  end
+  object SP_Insere_Msg: TZStoredProc
+    Connection = whats
+    Params = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftWideString
+        Name = '@cel_cliente'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@TpMensagem'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@Msg'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@id_user'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@idAnexo'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@idAtendimento'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@idMsgAuto'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@idWhatsMsg'
+        ParamType = ptInput
+      end>
+    StoredProcName = 'dbo.Insere_Msg'
+    Left = 832
+    Top = 432
+    ParamData = <
+      item
+        DataType = ftInteger
+        Name = '@RETURN_VALUE'
+        ParamType = ptResult
+      end
+      item
+        DataType = ftWideString
+        Name = '@cel_cliente'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@TpMensagem'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@Msg'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@id_user'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@idAnexo'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@idAtendimento'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftInteger
+        Name = '@idMsgAuto'
+        ParamType = ptInput
+      end
+      item
+        DataType = ftWideString
+        Name = '@idWhatsMsg'
+        ParamType = ptInput
+      end>
+  end
+end
